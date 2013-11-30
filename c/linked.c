@@ -116,6 +116,37 @@ void removeDup(IntElement **head) {
   }
 }
 
+/*
+   Find the last k-th node of a linked list,
+   counting from 1 from the end.
+*/
+IntElement *lastKth(IntElement *head, int k) {
+  if (k <= 0)
+    return NULL;
+
+  IntElement *n1 = head;
+  IntElement *n2 = head;
+  int i = 1;
+
+  // Let n1 runs ahead
+  while (i < k) {
+    n1 = n1->next;
+    i++;
+    // Corner case, k > length
+    if (!n1 && i <= k) return NULL; 
+  }
+
+  if (!n1)
+    return n2;
+
+  while(n1->next) {
+    n1 = n1->next;
+    n2 = n2->next;
+  }
+
+  return n2;
+}
+
 main() {
   // Allocate new node
   IntElement *head = (IntElement *)malloc(sizeof(IntElement));
@@ -166,6 +197,12 @@ main() {
 
   removeDup(&head);
   printList(head);
+
+  IntElement *sth = lastKth(head, 4);
+  if (sth)
+    printf("%d\n", sth->data);
+  else
+    printf("ERROR.\n");
   
   // Return memory to the OS
   freeList(&head);
