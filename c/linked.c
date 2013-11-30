@@ -4,11 +4,17 @@
 
 #include <stdio.h>
 
+/*
+   struct IntElement for singly linked list of integer
+*/
 typedef struct IntElement {
   struct IntElement *next;
   int data;
 } IntElement;
 
+/*
+   Insert a value in front of a linked list
+*/
 int insertInFront(IntElement **head, int data) {
   IntElement *newElem = (IntElement *)malloc(sizeof(IntElement));
   if (!newElem)
@@ -20,6 +26,9 @@ int insertInFront(IntElement **head, int data) {
   return 1;
 }
 
+/*
+   Print a linked list
+*/
 int printList(IntElement *head) {
   while(head) {
     printf("%d ", head->data);
@@ -29,15 +38,23 @@ int printList(IntElement *head) {
   return 1;
 }
 
-int freeList(IntElement *head) {
-  IntElement *tmp;
-  while(head) {
-    tmp = head;
+/*
+   Free a linked list
+*/
+int freeList(IntElement **head) {
+  IntElement *tmp = *head;
+  while(tmp) {
+    IntElement *next = tmp->next;
     free(tmp);
-    head = head->next;
+    tmp = next;
   }
+  *head = NULL;
+  return 1;
 }
 
+/*
+   Create a node
+*/
 IntElement *createNode(int data) {
   IntElement *node;
   if (!(node = (IntElement*)malloc(sizeof(IntElement))))
@@ -45,6 +62,58 @@ IntElement *createNode(int data) {
   node->data = data;
   node->next = NULL;
   return node;
+}
+
+/*
+   find a value in a linked list
+*/
+IntElement *find(IntElement *head, int data) {
+  while (head && head->data != data)
+    head = head->next;
+  return head;
+}
+
+/*
+   Delete a node in a linked list
+*/
+int deleteNode(IntElement **head, IntElement *node) {
+  IntElement *elem = *head;
+  if (node == *head) {
+    *head = elem->next;
+    free(node);
+    return 1;
+  }
+
+  while(elem) {
+    if (elem->next == node) {
+      // elem is preceding node
+      elem->next = node->next;
+      free(node);
+      return 1;
+    }
+    elem = elem->next;
+  }
+
+  return 0;
+}
+
+/*
+   Remove duplication in linked list
+*/
+void removeDup(IntElement **head) {
+  IntElement *elem = *head;
+  IntElement *runner;
+
+  while(elem) {
+    runner = elem;
+    while (runner->next) {
+      if (elem->data == runner->next->data)
+	runner->next = runner->next->next;
+      else
+	runner = runner->next;
+    }
+    elem = elem->next;
+  }
 }
 
 main() {
@@ -61,7 +130,43 @@ main() {
   // Insert to head
   insertInFront(&head,4);
   printList(head);
+
+  // Find an element in list
+  IntElement *elem = find(head,2);
+  if (elem)
+    printf("%d\n", elem->data);
+  else
+    printf("Not found");
+
+  printList(head);
+
+  // delete a node
+  IntElement *del = createNode(2);
+  deleteNode(&head, del);
+  printList(head);
+  if (node)
+    deleteNode(&head, node);
+  else
+    printf("node was freed");
+  printList(head);
+
+  insertInFront(&head, 3);
+  insertInFront(&head, 2);
+  insertInFront(&head, 5);
+  insertInFront(&head, 5);
+  insertInFront(&head, 2);
+  insertInFront(&head, 7);
+  insertInFront(&head, 3);
+  insertInFront(&head, 5);
+  insertInFront(&head, 5);
+  insertInFront(&head, 1);
+  insertInFront(&head, 2);
+  insertInFront(&head, 7);
+  printList(head);
+
+  removeDup(&head);
+  printList(head);
   
   // Return memory to the OS
-  freeList(head);
+  freeList(&head);
 }
