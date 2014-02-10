@@ -24,9 +24,15 @@ void locally_accepted(int* n) {
 	while(*current)
 		printf("%d ", *current++);
 	printf("\n");
+	p = n+2;
+	globally_accepted();
+	n[2] = 10;
+	globally_accepted();
 }
 
 void globally_accepted() {
 	int* current = p;
-	//while(*current++)
+	while(*current)
+		printf("%d ", *current++);
+	printf("\n");
 }
