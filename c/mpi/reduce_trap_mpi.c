@@ -1,5 +1,9 @@
 // The trapezoidal rule in MPI
 // Using collective communication and proper I/O
+//
+// $ mpicc -g -Wall -std=c99 -o reduce_trap reduce_trap.c
+// $ mpiexec -n 4 ./reduce_trap
+// ~~~~
 #include <stdio.h>
 #include <mpi.h>
 
