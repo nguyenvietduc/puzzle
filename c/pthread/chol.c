@@ -1,5 +1,5 @@
 /* Cholesky decomposition.
- * Compile as follows: gcc -g -Wall -o chol chol.c chol_gold.c -lpthread -lm
+ * Compile as follows: gcc -g -Wall -o chol chol.c chol_gold.c -lpthread -lm -std=c99
  */
 
 #define _XOPEN_SOURCE 600
@@ -35,12 +35,14 @@ int check_results(float *, float *, unsigned int, float);
 int main(int argc, char** argv) 
 {	
 	// Check command line arguments
-	if(argc != 2){
-		printf("Error. Usage: ./chol <num_threads> \n");
+	// NOTE I modified this arguments line a bit for ease of running experiments
+	if(argc != 3){
+		printf("Error. Usage: ./chol <num_threads> <single_thread_enabled>\n");
 		exit(0);
 	}
 
 	int num_threads = atoi(argv[1]);
+	int single_thread_enabled = atoi(argv[2]); // 1 means to run the serial version
 	 
 	// Matrices for the program
 	Matrix A; // The N x N input matrix
@@ -60,7 +62,6 @@ int main(int argc, char** argv)
 	// print_matrix(A);
 	// getchar();
 
-
 	reference  = allocate_matrix(MATRIX_SIZE, MATRIX_SIZE, 0); // Create a matrix to store the CPU result
 	U_using_pthreads =  allocate_matrix(MATRIX_SIZE, MATRIX_SIZE, 0); // Create a matrix to store the device result
 
@@ -69,20 +70,22 @@ int main(int argc, char** argv)
 	gettimeofday(&start, NULL);
 
 	printf("Performing Cholesky decomposition on the CPU. \n");
-	int status = 1;//chol_gold(A, reference);
+	int status;
+	if (single_thread_enabled == 1)
+		status = chol_gold(A, reference);
+	else
+		status = 1;
 
 	gettimeofday(&stop, NULL);
 	printf("CPU run time = %0.2f s. \n", (float)(stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec)/(float)1000000));
-
 	if(status == 0){
 			  printf("Cholesky decomposition failed. The input matrix is not positive definite. \n");
 			  exit(0);
 	}
-	
 	printf("Cholesky decomposition on the CPU was successful. \n");
 
-	/* MODIFY THIS CODE: Perform the Cholesky decomposition using the multi-threaded version. The resulting upper triangular matrix should be returned in 
-	 U_using_pthreads */
+	// Perform the Cholesky decomposition using the multi-threaded version.
+	//The resulting upper triangular matrix should be returned in U_using_pthreads
 	gettimeofday(&start, NULL);
 	chol_using_pthreads(A, U_using_pthreads, num_threads);
 	gettimeofday(&stop, NULL);
@@ -100,6 +103,9 @@ int main(int argc, char** argv)
 	return 1;
 }
 
+/**
+	struct of argument passed to pthread function
+*/
 typedef struct pthread_args_struct {
 	int thread_id;
 	Matrix* A_p;
@@ -118,9 +124,19 @@ void barrier_wait_func(pthread_barrier_t* barrier, int thread_id) {
 }
 
 // Helper function to determine range of operation
-void range_determination_func(int begin, int end, int num_threads, int thread_id, int* start, int* range) {
+void range_determination_func(
+	int begin,			/* begin index of the divided range */
+	int end,			/* end index of the divided range */
+	int num_threads,	/* number of threads sharing the range */
+	int thread_id,		/* ID of thread invoking this function */
+	int* start,			/* start index for this thread */
+	int* range 			/* end index (exclusive) for this thread */)			
+{
+	// range size
 	int total = end - begin + 1;
+	// normal chunk size for each thread
 	int chunk = total / num_threads;
+
 	if (total < num_threads) {
 		// if there are more threads than resource,
 		// then no need to parallelize
@@ -187,7 +203,7 @@ void* pthread_cholesky_func(void* f_arg) {
 			U_p->elements[k*num_cols + j] /= U_p->elements[k*num_cols + k];
 		barrier_wait_func(barrier, thread_id);
 
-		// Naive parallelization: by rows
+		// Naive parallelization: by rows, not very balanced work among threads
 		// TODO load balance across all threads
 		range_determination_func(k+1, num_rows-1, num_threads, thread_id, &row_t, &row_range);
 		for (int i=row_t; i<row_range; ++i) {
@@ -207,7 +223,7 @@ void* pthread_cholesky_func(void* f_arg) {
 			U_p->elements[i*num_cols+j] = 0.0;
 }
 
-/* TODO Write code to perform Cholesky decopmposition using pthreads. */
+/* Perform Cholesky decopmposition using pthreads. */
 void chol_using_pthreads(const Matrix A, Matrix U, int num_threads)
 {
 	int i;

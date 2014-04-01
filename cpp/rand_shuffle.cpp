@@ -1,10 +1,10 @@
 // random_shuffle example
 // Credit: http://www.cplusplus.com/reference/algorithm/random_shuffle/
 #include <iostream>
-#include <algorithm>
+#include <algorithm>	// std::random_shuffle
 #include <vector>
 #include <ctime>
-#include <cstdlib>
+#include <cstdlib>		// std::rand, std::srand
 
 // random generator function:
 int myrandom(int i) { return std::rand()%i; }
@@ -21,7 +21,7 @@ int main() {
 	std::random_shuffle(myvector.begin(), myvector.end());
 
 	// using myrandom
-	std::random_shuffle(myvector.begin(), myvector.end(), myrandom);
+	//std::random_shuffle(myvector.begin(), myvector.end(), myrandom);
 
 	// print out content:
 	std::cout << "myvector contains: ";
